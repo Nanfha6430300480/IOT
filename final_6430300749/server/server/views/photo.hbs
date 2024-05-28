@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Image Upload</title>
+<link rel="stylesheet" type="text/css" href="../assets/js/core/jquery.dataTables.min.css">
+<script type="text/javascript" language="javascript" src="../assets/js/core/jquery-1.12.0.min.js"></script>
+<script type="text/javascript" src="../assets/js/core/jquery.dataTables.min.js"></script>
+<script> 
+    $(document).ready(function() {
+        $('#example').DataTable();
+    });
+  </script>
+</head>
+{{>navbar}}
+<body>
+ <header>
+<br> </br>   
+<br> </br> 
+<style>
+    body {
+      
+      font-family: 'Itim', Bold;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      padding: 0;
+    }
+ 
+    header {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 20px; /* ระยะห่างด้านบนของ header */
+    }
+ 
+    .card {
+      width: 80%; /* กำหนดความกว้างของ card */
+      padding: 20px; /* กำหนดระยะห่างของขอบ card */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* เงาของ card */
+      margin-top: 20px; /* ระยะห่างด้านบนของ card */
+    }
+ 
+    #uploadForm {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+ 
+    #fileInput {
+      margin-right: 10px;
+    }
+ 
+    #imageContainer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
+ 
+    .imageItem {
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+ 
+    .fileName {
+      margin-top: 5px;
+    }
+ 
+    .timeText {
+      margin-top: 5px;
+    }
+</style>
+</head>
+<body>
+<header>
+<h2>Upload Image</h2>
+<form id="uploadForm" enctype="multipart/form-data">
+<input type="file" id="fileInput" name="image">
+<label for="openTime">เวลาเปิด:</label>
+<input type="time" id="openTime" name="openTime">
+<label for="closeTime">เวลาปิด:</label>
+<input type="time" id="closeTime" name="closeTime">
+<button type="submit">Upload</button>
+</form>
+</header>
+ 
+<div class="card">
+<h2>Images</h2>
+<div id="imageContainer"></div>
+</div>
+ 
+<script>
+  async function uploadImage(event) {
+    event.preventDefault();
+ 
+    const formData = new FormData(document.getElementById('uploadForm'));
+    const file = formData.get('image');
+    const fileName = file.name;
+ 
+    try {
+      const response = await fetch('/upload', {
+        method: 'POST',
+        body: formData
+      });
+ 
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+ 
+      alert('Image uploaded successfully');
+      displayImages();
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Upload failed');
+    }
+  }
+ 
+  async function displayImages() {
+    try {
+      const response = await fetch('/images');
+      const data = await response.json();
+ 
+      const imageContainer = document.getElementById('imageContainer');
+      imageContainer.innerHTML = '';
+ 
+      const maxWidth = 300;
+      const maxHeight = 300;
+ 
+      data.forEach(image => {
+        const img = document.createElement('img');
+        img.src = image.imageUrl;
+        img.alt = 'Image';
+ 
+        const imageRatio = image.width / image.height;
+        let imageWidth, imageHeight;
+        if (imageRatio >= 1) {
+          imageWidth = maxWidth;
+          imageHeight = maxWidth / imageRatio;
+        } else {
+          imageHeight = maxHeight;
+          imageWidth = maxHeight * imageRatio;
+        }
+ 
+        img.style.width = `${imageWidth}px`;
+        img.style.height = `${imageHeight}px`;
+        img.style.marginRight = '30px';
+        img.style.marginBottom = '30px';
+ 
+        const fileNameDiv = document.createElement('div');
+        const fileNameWithoutExtension = image.fileName.split('.').slice(0, -1).join('.');
+        fileNameDiv.textContent = fileNameWithoutExtension;
+        fileNameDiv.className = 'fileName';
+        fileNameDiv.style.marginTop = '5px';
+ 
+        const openTimeText = document.createElement('div');
+        openTimeText.textContent = `เวลาเปิด: ${image.openTime}`;
+        openTimeText.className = 'timeText';
+ 
+        const closeTimeText = document.createElement('div');
+        closeTimeText.textContent = `เวลาปิด: ${image.closeTime}`;
+        closeTimeText.className = 'timeText';
+ 
+        const imageItemDiv = document.createElement('div');
+        imageItemDiv.className = 'imageItem';
+        imageItemDiv.appendChild(img);
+        imageItemDiv.appendChild(fileNameDiv);
+        imageItemDiv.appendChild(openTimeText);
+        imageItemDiv.appendChild(closeTimeText);
+ 
+        imageContainer.appendChild(imageItemDiv);
+      });
+    } catch (error) {
+      console.error('Error fetching images:', error);
+      alert('Error fetching images');
+    }
+  }
+ 
+  document.getElementById('uploadForm').addEventListener('submit', uploadImage);
+  document.addEventListener('DOMContentLoaded', displayImages);
+</script>
+</header>
+</body>
+</html>
